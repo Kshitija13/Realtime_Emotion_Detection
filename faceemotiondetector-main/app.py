@@ -5,7 +5,7 @@ import streamlit as st
 # from keras.models import model_from_json
 from keras.models import load_model
 from tensorflow.keras.utils import img_to_array
-from streamlit_webrtc import webrtc_streamer, VideoProcessorBase
+from streamlit_webrtc import webrtc_streamer, VideoTransformerBase
 
 
 # load model
@@ -26,7 +26,7 @@ try:
 except Exception:
     st.write("Error loading cascade classifiers")
 
-class VideoTransformer(VideoProcessorBase):
+class VideoTransformer(VideoTransformerBase):
     def transform(self, frame):
         img = frame.to_ndarray(format="bgr24")
 
