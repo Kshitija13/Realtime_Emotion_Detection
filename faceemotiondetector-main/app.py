@@ -15,10 +15,10 @@ emotion_dict = ["Angry","Disgust","Fear","Happy","Neutral","Sad","Surprise"]
 # loaded_model_json = json_file.read()
 # json_file.close()
 # classifier = model_from_json(loaded_model_json)
-classifier =load_model('faceemotiondetector-main\model.h5')
+classifier =load_model('model.h5')
 
 # load weights into new model
-classifier.load_weights("faceemotiondetector-main\model.h5")
+classifier.load_weights("model.h5")
 
 #load face
 try:
