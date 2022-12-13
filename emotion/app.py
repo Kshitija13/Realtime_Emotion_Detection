@@ -2,6 +2,10 @@
 import cv2
 import numpy as np
 import streamlit as st
+from PIL import Image
+import io
+from io import BytesIO 
+import base64
 # from keras.models import model_from_json
 from keras.models import load_model
 from tensorflow.keras.utils import img_to_array
@@ -21,6 +25,7 @@ try:
     face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 except Exception:
     st.write("Error loading cascade classifiers")
+
 
 class VideoTransformer(VideoTransformerBase):
     def transform(self, frame):
@@ -48,11 +53,34 @@ class VideoTransformer(VideoTransformerBase):
 
         return img
 
+def image_ip():
+    image_file = st.file_uploader("Upload Your Image", type=['jpg', 'png', 'jpeg'])
+
+    if image_file is not None:
+        original_image = Image.open(image_file)
+        original_image = np.array(original_image)
+
+        gray=cv2.cvtColor(original_image, cv2.COLOR_BGR2GRAY)
+        faces= face_cascade.detectMultiScale(gray, 1.3, 3)
+        for x,y,w,h in faces:
+            sub_face_img=gray[y:y+h, x:x+w]
+            resized=cv2.resize(sub_face_img,(48,48))
+            normalize=resized/255.0
+            reshaped=np.reshape(normalize, (1, 48, 48, 1))
+            result=classifier.predict(reshaped)
+            label=np.argmax(result, axis=1)[0]
+            print(label)
+            cv2.rectangle(original_image, (x,y), (x+w, y+h), (0,0,255), 1)
+            cv2.rectangle(original_image,(x,y),(x+w,y+h),(50,50,255),2)
+            cv2.rectangle(original_image,(x,y-40),(x+w,y),(50,50,255),-1)
+            cv2.putText(original_image, emotion_dict[label], (x, y-10),cv2.FONT_HERSHEY_SIMPLEX,0.8,(255,255,255),2)
+        return original_image
+        
 def main():
     # Face Analysis Application #
-    st.title("Real Time Face Emotion Detection Application")
-    activiteis = ["Home", "Webcam Face Detection", "About"]
-    choice = st.sidebar.selectbox("Select Activity", activiteis)
+    st.title("Real Time Face Emotion Detection")
+    activities = ["Home", "Webcam Face Emotion Detection", "Emotion Detection using Image"]
+    choice = st.sidebar.selectbox("Select Activity", activities)
     st.sidebar.markdown(
         """ Developed by Siddhi Naik, Prachi Channe, Kshitija Lade, Pratiksha Rale    
             Email : smnaik@mitaoe.ac.in , pmchanne@mitaoe.ac.in, kvlade@mitaoe.ac.in, pprale@mitaoe.ac.in""")
@@ -70,34 +98,21 @@ def main():
 
                  2. Real time face emotion recognization.
 
+                 3. Face emotion recognization using input image.
+
                  """)
     elif choice == "Webcam Face Detection":
         st.header("Webcam Live Feed")
         st.write("Click on start to use webcam and detect your face emotion")
         webrtc_streamer(key="example", video_transformer_factory=VideoTransformer)
-
-    elif choice == "About":
-        st.subheader("About this app")
-        html_temp_about1= """<div style="background-color:#6D7B8D;padding:10px">
-                                    <h4 style="color:white;text-align:center;">
-                                    Real time face emotion detection application using OpenCV, Custom Trained CNN model and Streamlit.</h4>
-                                    </div>
-                                    </br>"""
-        st.markdown(html_temp_about1, unsafe_allow_html=True)
-
-        html_temp4 = """
-                             		<div style="background-color:#98AFC7;padding:10px">
-                             		<h4 style="color:white;text-align:center;">This Application is developed using Streamlit Framework, Opencv, Tensorflow and Keras library for demonstration purpose. </h4>
-                             		<h4 style="color:white;text-align:center;">Thanks for Visiting</h4>
-                             		</div>
-                             		<br></br>
-                             		<br></br>"""
-
-        st.markdown(html_temp4, unsafe_allow_html=True)
     
+    elif choice == "Emotion Detection using Image":
+        img = image_ip()
+        st.text("Emotion Detection")
+        st.image(img)
+
     else:
         pass
-
 
 if __name__ == "__main__":
     main()
